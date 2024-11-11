@@ -43,8 +43,8 @@ while not(is_exception):
             skiprows=rows_to_skip,                                      # AMOUNT OF ROWS TO BE SKIPED STARTING FROM ZERO
             header=None,                                                # FIRST ROW IS SKIPED, SO THERE IS NO HEADER
             encoding='latin-1',                                         # AN ENCODING THAT SEEMS TO WORK
-            nrows=rows_per_iteration,                                    # AMOUNT OF ROWS READ FROM CSV
-            on_bad_lines='skip'
+            nrows=rows_per_iteration,                                   # AMOUNT OF ROWS READ FROM CSV
+            on_bad_lines='skip'                                         # SKIP LINES WITH MORE VALUES THAN COLUMNS (ERROR LINES)
         )
 
         rows_to_skip += rows_per_iteration  # ADD NUMBER OF ALREADY ITERATED ROWS TO BE SKIPED ON NEXT ITERATION
@@ -155,3 +155,14 @@ print(f'Done in {spent_time} seconds')
 
 print('FINAL DATAFRAME ->')
 print(final_data)
+
+print('Writing data on new csv...')
+start = time.time()
+try:
+    final_data.to_csv('./data/microdados_ed_basica_2023_transformado.csv', index=False)
+except Exception as e:
+    print('ERROR: ' + str(e))
+    exit(1)
+end = time.time()
+spent_time = round(end - start, 5)
+print(f'Done in {spent_time} seconds')
