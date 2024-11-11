@@ -36,7 +36,6 @@ print('Iterating over csv to add rows to dataframe...')
 start = time.time()
 
 while not(is_exception):
-    start = time.time()
     # "partial_data" IS THE PARTIAL DATAFRAME GENERATED ON EACH ITERATION
     try:
         partial_data = pd.read_csv(
@@ -44,7 +43,8 @@ while not(is_exception):
             skiprows=rows_to_skip,                                      # AMOUNT OF ROWS TO BE SKIPED STARTING FROM ZERO
             header=None,                                                # FIRST ROW IS SKIPED, SO THERE IS NO HEADER
             encoding='latin-1',                                         # AN ENCODING THAT SEEMS TO WORK
-            nrows=rows_per_iteration                                    # AMOUNT OF ROWS READ FROM CSV
+            nrows=rows_per_iteration,                                    # AMOUNT OF ROWS READ FROM CSV
+            on_bad_lines='skip'
         )
 
         rows_to_skip += rows_per_iteration  # ADD NUMBER OF ALREADY ITERATED ROWS TO BE SKIPED ON NEXT ITERATION
