@@ -22,7 +22,7 @@ columns_of_interest = ['QT_TABLET_ALUNO',
                        'TP_DEPENDENCIA',
                        ]
 
-rows_per_iteration = 100    # ADD X ROWS TO THE DATAFRAME PER ITERATION
+rows_per_iteration = 10000  # ADD X ROWS TO THE DATAFRAME PER ITERATION
 rows_to_skip = 1            # SKIP THE HEADER FOR NOW (IT IS ADDED LATER)
 is_exception = False        # WHEN REACH THE END OF CSV, MAYBE AN EXCEPTION IS RAISED
 final_data = pd.DataFrame() # CREATES AN EMPTY DATAFRAME, TO WHICH THE GENERATED 
@@ -44,7 +44,8 @@ while not(is_exception):
             header=None,                                                # FIRST ROW IS SKIPED, SO THERE IS NO HEADER
             encoding='latin-1',                                         # AN ENCODING THAT SEEMS TO WORK
             nrows=rows_per_iteration,                                   # AMOUNT OF ROWS READ FROM CSV
-            on_bad_lines='skip'                                         # SKIP LINES WITH MORE VALUES THAN COLUMNS (ERROR LINES)
+            on_bad_lines='error',                                       # SKIP LINES WITH MORE VALUES THAN COLUMNS (ERROR LINES)
+            sep=';'
         )
 
         rows_to_skip += rows_per_iteration  # ADD NUMBER OF ALREADY ITERATED ROWS TO BE SKIPED ON NEXT ITERATION
@@ -67,6 +68,8 @@ end = time.time()
 spent_time = round(end - start, 5)
 print(f'Done in {spent_time} seconds')
 
+# print(final_data)
+
 #######################################################################################################################
 
 print('Getting csv headers and adding them as dataframe headers...')
@@ -79,7 +82,8 @@ try:
         header=None,
         encoding='latin-1',
         skiprows=0,
-        nrows=1
+        nrows=1,
+        sep=';'
     )
 
     # "headers.values" RETURNS A NUMPY ARRAY, THAT MUST BE CONVERTED INTO A 
@@ -100,46 +104,6 @@ print(f'Done in {spent_time} seconds')
 
 #######################################################################################################################
 
-print('Removing rows with excessive columns...')
-start = time.time()
-try:
-    indexes_to_drop = []
-    excessive_columns = final_data[np.nan]
-    for index, row in excessive_columns.iterrows():
-
-        values_arr = []
-        for i in range(0, 8, 1):
-            values_arr.append(row[i])
-
-        for i in values_arr:
-            if not(np.isnan(i)):
-                indexes_to_drop.append(index)
-
-    final_data.drop(indexes_to_drop, inplace=True)
-
-except Exception as e:
-    print('ERROR: ' + str(e))
-    exit(0)
-
-end = time.time()
-spent_time = round(end - start, 5)
-print(f'Done in {spent_time} seconds')
-
-#######################################################################################################################
-
-print('Removing columns with "NaN" header...')
-start = time.time()
-try:
-    final_data = final_data.drop([np.nan], axis=1)
-except Exception as e:
-    print('ERROR: ' + str(e))
-    exit(0)
-end = time.time()
-spent_time = round(end - start, 5)
-print(f'Done in {spent_time} seconds')
-
-#######################################################################################################################
-
 print('Getting only columns of interest...')
 start = time.time()
 try:
@@ -152,9 +116,6 @@ spent_time = round(end - start, 5)
 print(f'Done in {spent_time} seconds')
 
 #######################################################################################################################
-
-print('FINAL DATAFRAME ->')
-print(final_data)
 
 print('Writing data on new csv...')
 start = time.time()
