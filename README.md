@@ -16,3 +16,7 @@
 
 ### running script 
 ```python3 ./src/etl.py```
+
+# Script result  
+The Script shall write the file ```microdados_ed_basica_2023_transformado.csv``` under the directory ```./data```.
+
