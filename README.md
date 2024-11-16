@@ -11,12 +11,12 @@
 ### activating virtual environment
 ```source env/bin/activate```
 
-### installing requirements ons virtual environment
+### installing requirements on virtual environment
 ```pip install -r ./src/requirements.txt```
 
 ### running script 
 ```python3 ./src/etl.py```
 
 # Script result  
-The Script shall write the file ```microdados_ed_basica_2023_transformado.csv``` under the directory ```./data```.
+The Script shall write the file ```microdados_ed_basica_2023_transformed.csv``` under the directory ```./data```.
 

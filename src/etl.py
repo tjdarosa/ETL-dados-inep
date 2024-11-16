@@ -5,7 +5,7 @@ import time
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-print('STARTING DATA EXTRACTING AND TRANSFORMING...')
+print('STARTING DATA EXTRACTING AND TRANSFORMING...\n')
 
 columns_of_interest = ['QT_TABLET_ALUNO',
                        'QT_COMP_PORTATIL_ALUNO',
@@ -19,16 +19,14 @@ columns_of_interest = ['QT_TABLET_ALUNO',
                        'NO_MICRORREGIAO',
                        'NO_MUNICIPIO',
                        'QT_MAT_BAS',
-                       'TP_DEPENDENCIA',
-                       ]
+                       'TP_DEPENDENCIA']
 
 rows_per_iteration = 10000  # ADD X ROWS TO THE DATAFRAME PER ITERATION
 rows_to_skip = 1            # SKIP THE HEADER FOR NOW (IT IS ADDED LATER)
-is_exception = False        # WHEN REACH THE END OF CSV, MAYBE AN EXCEPTION IS RAISED
-final_data = pd.DataFrame() # CREATES AN EMPTY DATAFRAME, TO WHICH THE GENERATED 
-                            # DATAFRAMES WILL BE CONCATENATED ON EACH ITERATION
+is_exception = False        # WHEN THE END OF CSV IS REACHED, AN EXCEPTION IS RAISED, MEANING END OF FILE 
 
-# iterations = 0              # REMOVE LATER, USED TO LIMIT DATAFRAME SIZE FOR NOW
+final_data = pd.DataFrame() # CREATES AN EMPTY DATAFRAME, TO WHICH THE GENERATED 
+                            # DATAFRAMES WILL BE CONCATENATED ON EACH ITERATION                           
 
 #######################################################################################################################
 
@@ -45,7 +43,7 @@ while not(is_exception):
             encoding='latin-1',                                         # AN ENCODING THAT SEEMS TO WORK
             nrows=rows_per_iteration,                                   # AMOUNT OF ROWS READ FROM CSV
             on_bad_lines='error',                                       # SKIP LINES WITH MORE VALUES THAN COLUMNS (ERROR LINES)
-            sep=';'
+            sep=';',                                                    # CSV SEPARATOR
         )
 
         rows_to_skip += rows_per_iteration  # ADD NUMBER OF ALREADY ITERATED ROWS TO BE SKIPED ON NEXT ITERATION
@@ -53,20 +51,18 @@ while not(is_exception):
             [final_data, partial_data],
             ignore_index=True
         )
-        # iterations += 1                     # REMOVE LATER, USED TO LIMIT DATAFRAME SIZE FOR NOW
-
-
-        # REMOVE LATER, LIMITING DATAFRAME SIZE FOR NOW
-        # if iterations == 5:
-        #     is_exception = True
 
     except Exception as e:
-        is_exception = True
-        print("ERROR: " +  str(e))
+        if str(e) == 'No columns to parse from file':
+            # OK, ALL ROWS WERE LOADED
+            is_exception = True
+        else:
+            print("ERROR: " +  str(e))
+            exit(1)
 
 end = time.time()
 spent_time = round(end - start, 5)
-print(f'Done in {spent_time} seconds')
+print(f'Done in {spent_time} seconds\n')
 
 # print(final_data)
 
@@ -100,7 +96,9 @@ except Exception as e:
 
 end = time.time()
 spent_time = round(end - start, 5)
-print(f'Done in {spent_time} seconds')
+print(f'Done in {spent_time} seconds\n')
+
+# print(final_data)
 
 #######################################################################################################################
 
@@ -113,17 +111,128 @@ except Exception as e:
     exit(0)
 end = time.time()
 spent_time = round(end - start, 5)
-print(f'Done in {spent_time} seconds')
+print(f'Done in {spent_time} seconds\n')
+
+# print(final_data)
+
+#######################################################################################################################
+
+print('Removing lines with empty values or value "88888"...')
+start = time.time()
+try:
+    all_tuples = final_data.itertuples(index=True)
+    for row in all_tuples:
+        for item in row:
+            if (( type(item) == float ) and ( np.isnan(item) )) or ( item == 88888 ):
+                final_data.drop(row[0], inplace=True)
+                # print(f'REMOVED ROW OF INDEX [{row[0]}]')
+                break
+except Exception as e:
+    print('ERROR: ' + str(e))
+    exit(0)
+end = time.time()
+spent_time = round(end - start, 5)
+print(f'Done in {spent_time} seconds\n')
+
+# print(final_data)s
+
+#######################################################################################################################
+
+print('Converting float values to int...')
+start = time.time()
+try:
+    float_columns = [
+        'QT_TABLET_ALUNO',
+        'QT_COMP_PORTATIL_ALUNO',
+        'QT_DESKTOP_ALUNO',
+        'IN_INTERNET',
+        'IN_INTERNET_APRENDIZAGEM',
+        'IN_BANDA_LARGA',
+        'QT_MAT_BAS'
+    ]
+    for i in float_columns:
+        final_data[i] = final_data[i].astype(int)
+    
+except Exception as e:
+    print('ERROR: ' + str(e))
+    exit(0)
+end = time.time()
+spent_time = round(end - start, 5)
+print(f'Done in {spent_time} seconds\n')
+
+# print(final_data)
+
+#######################################################################################################################
+
+print('Translating "TP_DEPENDENCIA" values...')
+start = time.time()
+try:
+
+    def translate_tp_dependencia(value):
+        match value[0]:
+
+            case 1:
+                return 'Federal'
+            case 2:
+                return 'Estadual'
+            case 3:
+                return 'Municipal'
+            case 4:
+                return 'Privada'
+
+    final_data['TP_DEPENDENCIA'] = final_data['TP_DEPENDENCIA'].apply(
+        translate_tp_dependencia, 
+        axis=1
+    )
+except Exception as e:
+    print('ERROR: ' + str(e))
+    exit(1)
+end = time.time()
+spent_time = round(end - start, 5)
+print(f'Done in {spent_time} seconds\n')
+
+#######################################################################################################################
+
+print('Translating "IN_INTERNET", "IN_INTERNET_APRENDIZAGEM" and "IN_BANDA_LARGA" values...')
+start = time.time()
+try:
+
+    def translate_zero_and_one(value):
+        match value[0]:
+
+            case 0:
+                return 'Não'
+            case 1:
+                return 'Sim'
+
+    final_data['IN_INTERNET'] = final_data['IN_INTERNET'].apply(
+        translate_zero_and_one, 
+        axis=1
+    )
+    final_data['IN_INTERNET_APRENDIZAGEM'] = final_data['IN_INTERNET_APRENDIZAGEM'].apply(
+        translate_zero_and_one, 
+        axis=1
+    )
+    final_data['IN_BANDA_LARGA'] = final_data['IN_BANDA_LARGA'].apply(
+        translate_zero_and_one, 
+        axis=1
+    )
+except Exception as e:
+    print('ERROR: ' + str(e))
+    exit(1)
+end = time.time()
+spent_time = round(end - start, 5)
+print(f'Done in {spent_time} seconds\n')
 
 #######################################################################################################################
 
 print('Writing data on new csv...')
 start = time.time()
 try:
-    final_data.to_csv('./data/microdados_ed_basica_2023_transformado.csv', index=False)
+    final_data.to_csv('./data/microdados_ed_basica_2023_transformed.csv', index=False)
 except Exception as e:
     print('ERROR: ' + str(e))
     exit(1)
 end = time.time()
 spent_time = round(end - start, 5)
-print(f'Done in {spent_time} seconds')
+print(f'Done in {spent_time} seconds\n')
